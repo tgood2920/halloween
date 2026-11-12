@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎃 할로윈 파티 초대장</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: #ffe6f0;
+    transition: background-color 6s ease, filter 6s ease;
+  }
+  body.creep { background: #2a2326; filter: saturate(.35) contrast(1.15); }
+  body.nocursor, body.nocursor * { cursor: none !important; }
+
+  .stage {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .hidden { display: none !important; }
+
+  /* ---------- 1. 귀여운 초대장 ---------- */
+  #invite { background: rgba(0,0,0,.35); z-index: 5; }
+  .card {
+    background: #fff7fa; border-radius: 22px; padding: 28px 30px 24px;
+    text-align: center; box-shadow: 0 10px 30px rgba(255,111,145,.25);
+    max-width: 88vw; animation: pop .5s cubic-bezier(.2,1.6,.4,1);
+  }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } }
+  .card .emoji { font-size: 54px; animation: bob 1.6s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-8px) rotate(-6deg); } }
+  .card .title { font-size: 23px; font-weight: 700; color: #ff6f91; margin: 10px 0 6px; }
+  .card .sub { font-size: 15px; color: #c98a9b; margin: 0 0 18px; transition: color .4s; }
+  .card .sub.cold { color: #6b0010; font-weight: 700; letter-spacing: 1px; }
+  .btn {
+    background: #ffb3c1; color: #fff; border: none; padding: 11px 24px;
+    border-radius: 999px; margin: 5px; cursor: pointer; font-size: 17px; font-weight: 700;
+    font-family: inherit; transition: background .2s, transform .15s;
+  }
+  .btn:hover { background: #ff8c9f; transform: scale(1.05); }
+  #no.flee { position: fixed; z-index: 10; transition: left .18s ease-out, top .18s ease-out; }
+
+  /* ---------- 2. 로딩 ---------- */
+  #load { z-index: 4; color: #ff6f91; text-align: center; }
+  #loadEmoji { font-size: 64px; animation: bob 1.2s ease-in-out infinite; }
+  #loadText { font-size: 22px; font-weight: 700; margin: 14px 0; min-height: 1.4em; }
+  .bar { width: min(340px, 78vw); height: 18px; border-radius: 999px; background: #ffd3df; overflow: hidden; }
+  #fill { height: 100%; width: 0; background: linear-gradient(90deg, #ff9ab3, #ff6f91); transition: background 1s; }
+  #pct { font-size: 18px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  #load.red #loadText, #load.red #pct { color: #b3001b; text-shadow: 0 0 8px #ff0022; }
+  #load.red #fill { background: #8a0010; }
+  .shiver { animation: shiver .09s infinite; }
+  @keyframes shiver { 25% { transform: translate(1px,-1px); } 75% { transform: translate(-1px,1px); } }
+
+  /* ---------- 깜빡임 / 암전 ---------- */
+  #blackout { position: fixed; inset: 0; background: #000; z-index: 20; display: none; }
+  #blackout.on { display: block; }
+
+  /* ---------- 3. 어둠 ---------- */
+  #dark { background: #000; z-index: 30; }
+  #whisper {
+    color: #8c8c8c; font-size: clamp(18px, 4.4vw, 30px); letter-spacing: 3px; text-align: center;
+    min-height: 1.5em; padding: 0 6vw; text-shadow: 0 0 6px rgba(255,255,255,.15);
+    transition: opacity 1.2s;
+  }
+  #whisper.red { color: #9e0016; text-shadow: 0 0 12px #ff0022; }
+  #eyes { position: fixed; display: flex; gap: 46px; opacity: 0; transition: opacity 2.4s ease-in; pointer-events: none; }
+  #eyes.on { opacity: 1; }
+  #eyes span {
+    width: 26px; height: 9px; border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 18%, #ff2a2a 30%, #5a0000 70%, transparent 72%);
+    box-shadow: 0 0 18px 4px rgba(255,0,0,.35);
+    animation: blink 3.8s infinite;
+  }
+  #eyes span:last-child { transform: rotate(8deg); }
+  @keyframes blink { 0%, 46%, 54%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.05); } }
+
+  /* ---------- 4. 점프 스케어 ---------- */
+  #scare { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 50; background: #000; display: block; }
+
+  /* ---------- 5. 끝 ---------- */
+  #end { background: radial-gradient(circle at 50% 40%, #1a0004, #000 70%); z-index: 40; color: #c9c9c9; text-align: center; }
+  #endTitle {
+    position: relative; margin: 0; font-size: clamp(38px, 10vw, 96px); font-weight: 900;
+    color: #a3000f; letter-spacing: 2px; text-shadow: 0 0 18px rgba(255,0,30,.55), 2px 3px 0 #300;
+    animation: wob 4s ease-in-out infinite;
+  }
+  @keyframes wob { 50% { transform: skewX(-3deg) translateY(2px); } }
+  .drip {
+    position: absolute; top: 82%; width: 8px; border-radius: 0 0 8px 8px;
+    background: linear-gradient(#a3000f, #6b0008); height: 0;
+    animation: drip var(--d) ease-in forwards; animation-delay: var(--w);
+  }
+  .drip::after { content: ""; position: absolute; bottom: -6px; left: -2px; width: 12px; height: 12px; border-radius: 50%; background: #6b0008; }
+  @keyframes drip { to { height: var(--h); } }
+  #endSub { font-size: 20px; margin: 70px 0 22px; opacity: 0; animation: fadein 2s 1.5s forwards; }
+  #again { background: #3b0008; color: #ffb3b3; opacity: 0; animation: fadein 2s 2.5s forwards; }
+  #again:hover { background: #5a000c; }
+  @keyframes fadein { to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- 1. 귀여운 초대장 -->
+<div id="invite" class="stage">
+  <div class="card">
+    <div class="emoji" id="cardEmoji">👻</div>
+    <p class="title">나랑 할로윈 같이 보낼래?</p>
+    <p class="sub" id="cardSub">귀여운 파티 준비했어 💕</p>
+    <button class="btn" id="yes">🎃 좋아</button>
+    <button class="btn" id="no">🕸 싫어</button>
+  </div>
+</div>
+
+<!-- 2. 로딩 -->
+<div id="load" class="stage hidden">
+  <div id="loadEmoji">🎃</div>
+  <p id="loadText">파티 준비 중...</p>
+  <div class="bar"><div id="fill"></div></div>
+  <p id="pct">0%</p>
+</div>
+
+<!-- 3. 어둠 -->
+<div id="dark" class="stage hidden">
+  <p id="whisper"></p>
+  <div id="eyes"><span></span><span></span></div>
+</div>
+
+<div id="blackout"></div>
+
+<!-- 4. 점프 스케어 -->
+<canvas id="scare" class="hidden"></canvas>
+
+<!-- 5. 끝 -->
+<div id="end" class="stage hidden">
+  <h1 id="endTitle">HAPPY HALLOWEEN</h1>
+  <p id="endSub">🎃 놀랐어? 🎃</p>
+  <button class="btn" id="again">한 번 더 할래?</button>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const show = id => $(id).classList.remove('hidden');
+  const hide = id => $(id).classList.add('hidden');
+
+  /* ================= 오디오 (전부 즉석 합성) ================= */
+  let ac, master;
+  function initAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ac = new AC();
+    const comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -6; comp.ratio.value = 6;
+    master = ac.createGain(); master.gain.value = 0.9;
+    master.connect(comp); comp.connect(ac.destination);
+  }
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  function noiseBuf(sec) {
+    const b = ac.createBuffer(1, Math.floor(ac.sampleRate * sec), ac.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return b;
+  }
+  function panner(v) {
+    if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = v; return p; }
+    return ac.createGain();
+  }
+  function distCurve(k) {
+    const n = 44100, c = new Float32Array(n), deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; c[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x)); }
+    return c;
+  }
+
+  // 오르골: creep(0~1)이 오를수록 음이 처지고, 흔들리고, 느려진다
+  let creep = 0, boxOn = false;
+  const MELODY = [76, 79, 84, 79, 81, 79, 76, 74, 72, 74, 76, 79, 77, 74, 72, null];
+  function boxNote(freq, t, vol) {
+    const o = ac.createOscillator(), o2 = ac.createOscillator();
+    o.type = 'triangle'; o2.type = 'sine';
+    o.frequency.setValueAtTime(freq, t); o2.frequency.setValueAtTime(freq * 2.01, t);
+    const g = ac.createGain(), g2 = ac.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+    g2.gain.value = 0.25;
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(master);
+    o.start(t); o2.start(t); o.stop(t + 1.4); o2.stop(t + 1.4);
+  }
+  function startBox() {
+    if (!ac) return;
+    boxOn = true;
+    let i = 0;
+    (function step() {
+      if (!boxOn) return;
+      const m = MELODY[i++ % MELODY.length];
+      if (m !== null) {
+        const sag = 1 - creep * 0.14;                              // 전체적으로 음이 처짐
+        const wob = 1 + (Math.random() - 0.5) * creep * 0.07;      // 음정이 흔들림
+        boxNote(mtof(m) * sag * wob, ac.currentTime, 0.16);
+        if (creep > 0.6 && Math.random() < 0.4)                    // 불협화음이 끼어듦
+          boxNote(mtof(m + (Math.random() < .5 ? 1 : 6)) * sag, ac.currentTime + 0.02, 0.08);
+      }
+      setTimeout(step, 270 * (1 + creep * 1.4) + Math.random() * creep * 160);
+    })();
+  }
+  const stopBox = () => { boxOn = false; };
+
+  function glitchSound() {
+    if (!ac) return;
+    const t = ac.currentTime, n = ac.createBufferSource();
+    n.buffer = noiseBuf(0.25);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = rand(800, 3000); bp.Q.value = 2;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + rand(0.06, 0.2));
+    n.connect(bp); bp.connect(g); g.connect(master); n.start(t); n.stop(t + 0.25);
+  }
+
+  function thump(t, vol) {
+    const o = ac.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.3);
+  }
+  let heartOn = false;
+  function startHeart() {
+    if (!ac) return;
+    heartOn = true;
+    let gap = 1150, vol = 0.5;
+    (function beat() {
+      if (!heartOn) return;
+      const t = ac.currentTime;
+      thump(t, vol); thump(t + 0.21, vol * 0.7);
+      gap = Math.max(430, gap * 0.93); vol = Math.min(1, vol * 1.05);
+      setTimeout(beat, gap);
+    })();
+  }
+
+  let drone = null;
+  function startDrone() {
+    if (!ac) return;
+    const t = ac.currentTime, out = ac.createGain();
+    out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.4, t + 4);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 170;
+    const srcs = [];
+    [43.6, 44.1, 61.7].forEach(f => {
+      const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+      o.connect(lp); o.start(t); srcs.push(o);
+    });
+    const n = ac.createBufferSource(); n.buffer = noiseBuf(3); n.loop = true;
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 300; bp.Q.value = 0.6;
+    const ng = ac.createGain(); ng.gain.value = 0.06;
+    n.connect(bp); bp.connect(ng); ng.connect(out); n.start(t); srcs.push(n);
+    lp.connect(out); out.connect(master);
+    drone = { out, srcs };
+  }
+  function cutDrone() {           // 뚝 끊는다 (정적이 더 무섭다)
+    if (!drone) return;
+    const t = ac.currentTime;
+    drone.out.gain.cancelScheduledValues(t);
+    drone.out.gain.setValueAtTime(drone.out.gain.value, t);
+    drone.out.gain.linearRampToValueAtTime(0, t + 0.03);
+    drone.srcs.forEach(s => s.stop(t + 0.1));
+    drone = null;
+  }
+
+  // 속삭임: 필터 거친 잡음을 음절처럼 끊고, 왼쪽→오른쪽(=뒤에서 도는 느낌)으로 이동
+  function whisperSound(dur, panFrom, panTo) {
+    if (!ac) return;
+    const t = ac.currentTime, n = ac.createBufferSource();
+    n.buffer = noiseBuf(dur + 0.2);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3.5;
+    bp.frequency.setValueAtTime(1800, t);
+    const g = ac.createGain(); g.gain.setValueAtTime(0, t);
+    let tt = t;
+    while (tt < t + dur - 0.3) {
+      const syl = rand(0.09, 0.24);
+      bp.frequency.linearRampToValueAtTime(rand(900, 3600), tt + syl * 0.5);
+      g.gain.linearRampToValueAtTime(rand(0.35, 0.7), tt + syl * 0.3);
+      g.gain.linearRampToValueAtTime(0.03, tt + syl);
+      tt += syl + rand(0, 0.06);
+    }
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    const p = panner(panFrom);
+    if (p.pan) p.pan.linearRampToValueAtTime(panTo, t + dur);
+    n.connect(bp); bp.connect(g); g.connect(p); p.connect(master);
+    n.start(t); n.stop(t + dur + 0.2);
+  }
+
+  function screamSound() {
+    if (!ac) return;
+    const t = ac.currentTime, dur = 2.4;
+    // 쿵
+    const b = ac.createOscillator(); b.type = 'sine';
+    b.frequency.setValueAtTime(140, t); b.frequency.exponentialRampToValueAtTime(28, t + 0.7);
+    const bg = ac.createGain(); bg.gain.setValueAtTime(1, t); bg.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+    b.connect(bg); bg.connect(master); b.start(t); b.stop(t + 1);
+
+    // 비명
+    const out = ac.createGain();
+    out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(1, t + 0.015);
+    out.gain.setValueAtTime(1, t + dur - 0.7); out.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    const sh = ac.createWaveShaper(); sh.curve = distCurve(300); sh.oversample = '4x';
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 220;
+    sh.connect(hp); hp.connect(out); out.connect(master);
+    [1, 1.47, 2.03, 0.5, 2.96, 3.6].forEach((m, i) => {
+      const base = 410 * m, o = ac.createOscillator();
+      o.type = i % 2 ? 'square' : 'sawtooth';
+      o.frequency.setValueAtTime(base * 0.7, t);
+      o.frequency.exponentialRampToValueAtTime(base * 1.3, t + 0.22);
+      o.frequency.exponentialRampToValueAtTime(base * 0.8, t + dur);
+      const lfo = ac.createOscillator(); lfo.frequency.value = rand(6, 14);
+      const lg = ac.createGain(); lg.gain.value = base * 0.07;
+      lfo.connect(lg); lg.connect(o.frequency);
+      const g = ac.createGain(); g.gain.value = 0.22 / (1 + i * 0.6);
+      o.connect(g); g.connect(sh);
+      o.start(t); lfo.start(t); o.stop(t + dur); lfo.stop(t + dur);
+    });
+    const n = ac.createBufferSource(); n.buffer = noiseBuf(dur);
+    const nb = ac.createBiquadFilter(); nb.type = 'bandpass'; nb.frequency.value = 1900; nb.Q.value = 0.9;
+    const ng = ac.createGain(); ng.gain.value = 0.55;
+    n.connect(nb); nb.connect(ng); ng.connect(sh); n.start(t); n.stop(t + dur);
+  }
+
+  /* ================= 화면 효과 ================= */
+  function glitchText(el, finalText, ms = 650) {
+    const chars = '█▓▒░#@$%&*?!ㅎㅋㄱㅁ죽뒤눈';
+    const start = performance.now();
+    return new Promise(res => {
+      (function f(now) {
+        if (now - start >= ms) { el.textContent = finalText; return res(); }
+        el.textContent = Array.from(finalText, c => c === ' ' || Math.random() < 0.35 ? c : chars[Math.floor(Math.random() * chars.length)]).join('');
+        requestAnimationFrame(f);
+      })(start);
+    });
+  }
+  async function typeText(el, text, speed = 110) {
+    el.textContent = '';
+    for (const c of text) { el.textContent += c; await sleep(c === '.' ? speed * 3 : speed + rand(-30, 60)); }
+  }
+  function tween(from, to, ms, fn) {
+    const s = performance.now();
+    return new Promise(res => {
+      (function f(now) {
+        const k = Math.min((now - s) / ms, 1);
+        fn(from + (to - from) * k);
+        k < 1 ? requestAnimationFrame(f) : res();
+      })(s);
+    });
+  }
+
+  // 무서운 얼굴: 미리 오프스크린 캔버스에 한 번 그려둔다
+  function makeFace(S) {
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    x.fillStyle = '#000'; x.fillRect(0, 0, S, S);
+    const cx = S / 2, cy = S * 0.5;
+
+    x.save();
+    x.beginPath(); x.ellipse(cx, cy, S * 0.34, S * 0.47, 0, 0, Math.PI * 2);
+    const hg = x.createRadialGradient(cx, cy - S * 0.12, S * 0.04, cx, cy, S * 0.5);
+    hg.addColorStop(0, '#dfe2d3'); hg.addColorStop(0.5, '#9ea391'); hg.addColorStop(0.85, '#4a4d42'); hg.addColorStop(1, '#0d0e0b');
+    x.fillStyle = hg; x.fill(); x.clip();
+
+    for (let i = 0; i < 500; i++) {               // 얼룩진 피부
+      x.fillStyle = `rgba(${rand(30, 90) | 0},${rand(25, 60) | 0},${rand(20, 50) | 0},${rand(0, 0.09)})`;
+      x.beginPath(); x.arc(rand(0, S), rand(0, S), rand(2, 45), 0, 7); x.fill();
+    }
+    for (const s of [-1, 1]) {                      // 움푹 꺼진 볼
+      const g = x.createRadialGradient(cx + s * S * 0.2, cy + S * 0.12, 0, cx + s * S * 0.2, cy + S * 0.12, S * 0.16);
+      g.addColorStop(0, 'rgba(20,15,10,.55)'); g.addColorStop(1, 'rgba(20,15,10,0)');
+      x.fillStyle = g; x.fillRect(0, 0, S, S);
+    }
+    x.lineCap = 'round';                            // 핏줄
+    for (let v = 0; v < 26; v++) {
+      let px = rand(cx - S * 0.32, cx + S * 0.32), py = rand(cy - S * 0.45, cy + S * 0.45);
+      x.strokeStyle = `rgba(${rand(50, 90) | 0},10,${rand(30, 60) | 0},${rand(.25, .5)})`;
+      x.lineWidth = rand(1, 3.5);
+      x.beginPath(); x.moveTo(px, py);
+      for (let k = 0; k < 14; k++) { px += rand(-18, 18); py += rand(-18, 18); x.lineTo(px, py); }
+      x.stroke();
+    }
+
+    // 눈: 텅 빈 검은 구멍 + 바늘구멍 같은 눈동자 + 흘러내리는 검은 눈물
+    const eyes = [{ s: -1, r: 1.12, a: 0.32 }, { s: 1, r: 0.92, a: -0.18 }];
+    for (const e of eyes) {
+      const ex = cx + e.s * S * 0.135, ey = cy - S * 0.11;
+      const g = x.createRadialGradient(ex, ey, 0, ex, ey, S * 0.15 * e.r);
+      g.addColorStop(0, '#000'); g.addColorStop(0.6, 'rgba(0,0,0,.97)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g;
+      x.beginPath(); x.ellipse(ex, ey, S * 0.13 * e.r, S * 0.105 * e.r, e.a, 0, 7); x.fill();
+      x.strokeStyle = 'rgba(4,0,0,.9)';
+      for (let k = 0; k < 3; k++) {
+        let px = ex + rand(-S * 0.05, S * 0.05), py = ey + S * 0.06;
+        x.lineWidth = rand(5, 14);
+        x.beginPath(); x.moveTo(px, py);
+        const len = rand(S * 0.12, S * 0.38);
+        for (let d = 0; d < len; d += 12) { px += rand(-3, 3); py += 12; x.lineTo(px, py); }
+        x.stroke();
+      }
+      x.save();
+      x.shadowColor = '#fff'; x.shadowBlur = S * 0.03; x.fillStyle = '#fff';
+      x.beginPath(); x.arc(ex - e.s * S * 0.012, ey + S * 0.008, S * 0.011, 0, 7); x.fill();
+      x.restore();
+    }
+
+    x.fillStyle = 'rgba(0,0,0,.85)';                // 코: 갈라진 두 구멍
+    for (const s of [-1, 1]) { x.beginPath(); x.ellipse(cx + s * S * 0.022, cy + S * 0.05, S * 0.012, S * 0.035, s * 0.4, 0, 7); x.fill(); }
+
+    // 입: 세로로 찢어진 거대한 입 + 안쪽을 향한 이빨 고리
+    const mx = cx, my = cy + S * 0.25, rx = S * 0.12, ry = S * 0.19;
+    x.save();
+    x.beginPath(); x.ellipse(mx, my, rx, ry, 0, 0, 7);
+    const mg = x.createRadialGradient(mx, my, 0, mx, my, ry);
+    mg.addColorStop(0, '#000'); mg.addColorStop(0.55, '#0a0000'); mg.addColorStop(0.9, '#3d0006'); mg.addColorStop(1, '#5c0a0f');
+    x.fillStyle = mg; x.fill();
+    x.lineWidth = S * 0.012; x.strokeStyle = '#2a0003'; x.stroke();
+    x.clip();
+    for (let a = 0; a < Math.PI * 2; a += rand(0.16, 0.26)) {
+      const w = 0.085, L = rand(0.18, 0.42);
+      const p1 = [mx + Math.cos(a - w) * rx, my + Math.sin(a - w) * ry];
+      const p2 = [mx + Math.cos(a + w) * rx, my + Math.sin(a + w) * ry];
+      const tip = [mx + Math.cos(a + rand(-.05, .05)) * rx * (1 - L), my + Math.sin(a) * ry * (1 - L)];
+      const tg = x.createLinearGradient(p1[0], p1[1], tip[0], tip[1]);
+      tg.addColorStop(0, '#9c9070'); tg.addColorStop(1, '#e3dab8');
+      x.fillStyle = tg; x.strokeStyle = 'rgba(40,20,10,.8)'; x.lineWidth = 1.5;
+      x.beginPath(); x.moveTo(...p1); x.lineTo(...tip); x.lineTo(...p2); x.closePath(); x.fill(); x.stroke();
+    }
+    x.restore();
+    x.strokeStyle = 'rgba(90,0,8,.7)';             // 입꼬리에서 찢어진 자국
+    x.lineWidth = 3;
+    for (const s of [-1, 1]) {
+      let px = mx + s * rx * 0.9, py = my - ry * 0.35;
+      x.beginPath(); x.moveTo(px, py);
+      for (let k = 0; k < 7; k++) { px += s * rand(8, 20); py -= rand(6, 16); x.lineTo(px, py); }
+      x.stroke();
+    }
+
+    x.strokeStyle = 'rgba(0,0,0,.6)';              // 금 간 피부
+    for (let k = 0; k < 9; k++) {
+      let px = rand(0, S), py = rand(0, S);
+      x.lineWidth = rand(1, 2.5); x.beginPath(); x.moveTo(px, py);
+      for (let j = 0; j < 9; j++) { px += rand(-30, 30); py += rand(-30, 30); x.lineTo(px, py); }
+      x.stroke();
+    }
+    x.restore();
+
+    const vg = x.createRadialGradient(cx, cy, S * 0.25, cx, cy, S * 0.72);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.95)');
+    x.fillStyle = vg; x.fillRect(0, 0, S, S);
+    return c;
+  }
+  function makeGrain(n) {
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      const c = document.createElement('canvas'); c.width = c.height = 200;
+      const x = c.getContext('2d'), img = x.createImageData(200, 200);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = Math.random() * 255;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+      }
+      x.putImageData(img, 0, 0); out.push(c);
+    }
+    return out;
+  }
+
+  function runScare(face, grain) {
+    const cv = $('scare'); show('scare');
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const W = cv.width = Math.floor(innerWidth * dpr), H = cv.height = Math.floor(innerHeight * dpr);
+    const x = cv.getContext('2d');
+    const flashes = [0, 0.95, 1.7];
+    const start = performance.now();
+    let frame = 0;
+    return new Promise(res => {
+      (function f(now) {
+        const t = (now - start) / 1000;
+        x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+        const lunge = 1 - Math.pow(1 - Math.min(t / 0.16, 1), 3);       // 순식간에 덮쳐 옴
+        const size = Math.max(W, H) * (0.45 + lunge * 0.85 + t * 0.12);
+        const shake = Math.max(W, H) * (t < 1.9 ? 0.035 : 0.012);
+        const dx = rand(-shake, shake), dy = rand(-shake, shake);
+        x.drawImage(face, (W - size) / 2 + dx, (H - size) / 2 + dy * 0.6 + size * 0.04, size, size);
+        if (Math.random() < 0.55) {                                       // 화면 찢김
+          for (let i = 0; i < 5; i++) {
+            const sy = rand(0, H), sh = rand(6, H * 0.08), off = rand(-W * 0.07, W * 0.07);
+            x.drawImage(cv, 0, sy, W, sh, off, sy, W, sh);
+          }
+        }
+        if (flashes.some(fl => t >= fl && t < fl + 0.09)) {              // 붉은 번쩍임 (3번만)
+          x.fillStyle = 'rgba(200,0,10,.45)'; x.fillRect(0, 0, W, H);
+        }
+        x.globalAlpha = 0.16; x.drawImage(grain[frame++ % grain.length], 0, 0, W, H); x.globalAlpha = 1;
+        t < 2.5 ? requestAnimationFrame(f) : res();
+      })(start);
+    });
+  }
+
+  function makeDrips() {
+    const h = $('endTitle');
+    for (let i = 0; i < 9; i++) {
+      const d = document.createElement('span');
+      d.className = 'drip';
+      d.style.left = rand(4, 94) + '%';
+      d.style.width = rand(5, 11) + 'px';
+      d.style.setProperty('--h', rand(30, 120) + 'px');
+      d.style.setProperty('--d', rand(3, 7) + 's');
+      d.style.setProperty('--w', rand(0.2, 2) + 's');
+      h.appendChild(d);
+    }
+  }
+
+  /* ================= 1단계: 초대장 ================= */
+  const no = $('no');
+  let dodges = 0, lastDodge = 0;
+  function dodge(e) {
+    if (dodges >= 3 || started) return;
+    e.preventDefault();
+    dodges++; lastDodge = performance.now();
+    const r = no.getBoundingClientRect();
+    if (!no.classList.contains('flee')) { no.style.left = r.left + 'px'; no.style.top = r.top + 'px'; no.classList.add('flee'); void no.offsetWidth; }
+    no.style.left = rand(10, innerWidth - r.width - 10) + 'px';
+    no.style.top = rand(10, innerHeight - r.height - 10) + 'px';
+    const sub = $('cardSub');
+    if (dodges === 1) sub.textContent = '에이~ 그러지 말고 💕';
+    if (dodges === 2) sub.textContent = '진짜 싫어? 🥺';
+    if (dodges === 3) { sub.textContent = '도망가지 마.'; sub.classList.add('cold'); $('cardEmoji').textContent = '🙂'; }
+  }
+  no.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') dodge(e); });
+  no.addEventListener('pointerdown', dodge);
+
+  let started = false;
+  function onPick() {
+    if (performance.now() - lastDodge < 450) return;   // 모바일: 피한 직후의 탭은 무시
+    begin();
+  }
+  $('yes').addEventListener('click', onPick);
+  no.addEventListener('click', onPick);
+
+  // 다른 탭으로 가면 제목이 바뀐다
+  const origTitle = document.title;
+  document.addEventListener('visibilitychange', () => {
+    document.title = document.hidden ? '돌아와... 👁' : origTitle;
+  });
+
+  /* ================= 전체 시퀀스 ================= */
+  async function begin() {
+    if (started) return;
+    started = true;
+    initAudio();
+    if (ac && ac.resume) ac.resume().catch(() => {});
+    const el = document.documentElement, rf = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (rf) { try { const p = rf.call(el); p && p.catch && p.catch(() => {}); } catch (e) {} }
+
+    const face = makeFace(1000), grain = makeGrain(4);   // 미리 준비
+    hide('invite'); no.classList.add('hidden');
+    show('load');
+    startBox();
+
+    // 2단계: 귀여운 로딩 → 서서히 이상해짐
+    const fill = $('fill'), pct = $('pct'), lt = $('loadText'), le = $('loadEmoji');
+    const setP = p => { fill.style.width = p + '%'; pct.textContent = Math.floor(p) + '%'; };
+    await tween(0, 47, 2600, p => { setP(p); creep = p / 100 * 0.5; });
+    document.body.classList.add('creep');
+    await glitchText(lt, '잠깐만...');
+    await sleep(1300);
+    le.textContent = '🙂';
+    await glitchText(lt, '같이 있어 줄 거지?');
+    await tween(47, 66, 2200, p => { setP(p); creep = 0.5 + (p - 47) / 19 * 0.45; });
+    creep = 1;
+    $('load').classList.add('red', 'shiver');
+    le.textContent = '👁';
+    pct.textContent = '666%';
+    await glitchText(lt, '영원히.', 900);
+    document.body.classList.add('nocursor');
+    await sleep(700);
+
+    // 깜빡깜빡 → 암전
+    const bo = $('blackout');
+    for (const d of [90, 260, 70, 380, 120, 200]) {
+      bo.classList.toggle('on'); glitchSound(); await sleep(d);
+    }
+    bo.classList.add('on');
+    stopBox();
+    await sleep(1400);
+
+    // 3단계: 어둠 속 속삭임
+    hide('load'); show('dark'); bo.classList.remove('on');
+    startDrone(); startHeart();
+    const w = $('whisper');
+    await sleep(1200);
+    await typeText(w, '불이 나갔네...');
+    await sleep(1500);
+    await typeText(w, '괜찮아. 무서워하지 마.');
+    await sleep(1300);
+    whisperSound(2.2, -1, -0.3);
+    w.style.opacity = 0; await sleep(1200); w.textContent = ''; w.style.opacity = 1;
+
+    const eyes = $('eyes');
+    eyes.style.left = rand(10, 70) + 'vw'; eyes.style.top = rand(12, 75) + 'vh';
+    eyes.classList.add('on');
+    await sleep(2600);
+    w.classList.add('red');
+    whisperSound(2.6, 0.3, 1);
+    await typeText(w, '지금 네 바로 뒤에 있어.', 140);
+    await sleep(1600);
+
+    // 완전한 정적
+    eyes.classList.remove('on'); eyes.style.transition = 'none'; eyes.style.opacity = 0;
+    w.textContent = '';
+    heartOn = false; cutDrone();
+    await sleep(1800);
+
+    // 4단계: 점프 스케어
+    screamSound();
+    if (navigator.vibrate) navigator.vibrate([400, 80, 600]);
+    hide('dark');
+    await runScare(face, grain);
+
+    // 5단계: 끝
+    show('end'); hide('scare');
+    makeDrips();
+    document.body.classList.remove('nocursor');
+    if (ac) {                                 // 멀리서 들리는 일그러진 오르골 몇 음
+      const t = ac.currentTime + 1.5;
+      [76, 79, 84, 79].forEach((m, i) => boxNote(mtof(m) * 0.82, t + i * 0.9, 0.06));
+    }
+  }
+
+  $('again').addEventListener('click', () => location.reload());
+})();
+</script>
+</body>
+</html>
