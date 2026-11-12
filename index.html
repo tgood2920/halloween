@@ -81,7 +81,7 @@
     transition: opacity 1.2s;
   }
   #whisper.red { color: #9e0016; text-shadow: 0 0 12px #ff0022; }
-  #eyes { position: fixed; display: flex; gap: 46px; opacity: 0; transition: opacity 2.4s ease-in; pointer-events: none; }
+  #eyes { position: fixed; display: flex; gap: 46px; opacity: 0; transition: opacity .9s ease-in; pointer-events: none; }
   #eyes.on { opacity: 1; }
   #eyes span {
     width: 26px; height: 9px; border-radius: 50%;
@@ -247,12 +247,12 @@
   function startHeart() {
     if (!ac) return;
     heartOn = true;
-    let gap = 1150, vol = 0.5;
+    let gap = 800, vol = 0.6;
     (function beat() {
       if (!heartOn) return;
       const t = ac.currentTime;
       thump(t, vol); thump(t + 0.21, vol * 0.7);
-      gap = Math.max(430, gap * 0.93); vol = Math.min(1, vol * 1.05);
+      gap = Math.max(380, gap * 0.88); vol = Math.min(1, vol * 1.05);
       setTimeout(beat, gap);
     })();
   }
@@ -261,7 +261,7 @@
   function startDrone() {
     if (!ac) return;
     const t = ac.currentTime, out = ac.createGain();
-    out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.4, t + 4);
+    out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.4, t + 1.2);
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 170;
     const srcs = [];
     [43.6, 44.1, 61.7].forEach(f => {
@@ -581,56 +581,54 @@
     // 2단계: 귀여운 로딩 → 서서히 이상해짐
     const fill = $('fill'), pct = $('pct'), lt = $('loadText'), le = $('loadEmoji');
     const setP = p => { fill.style.width = p + '%'; pct.textContent = Math.floor(p) + '%'; };
-    await tween(0, 47, 2600, p => { setP(p); creep = p / 100 * 0.5; });
+    await tween(0, 47, 1300, p => { setP(p); creep = p / 100 * 0.6; });
     document.body.classList.add('creep');
-    await glitchText(lt, '잠깐만...');
-    await sleep(1300);
+    await glitchText(lt, '잠깐만...', 400);
+    await sleep(450);
     le.textContent = '🙂';
-    await glitchText(lt, '같이 있어 줄 거지?');
-    await tween(47, 66, 2200, p => { setP(p); creep = 0.5 + (p - 47) / 19 * 0.45; });
+    await glitchText(lt, '같이 있어 줄 거지?', 400);
+    await tween(47, 66, 1000, p => { setP(p); creep = 0.6 + (p - 47) / 19 * 0.4; });
     creep = 1;
     $('load').classList.add('red', 'shiver');
     le.textContent = '👁';
     pct.textContent = '666%';
-    await glitchText(lt, '영원히.', 900);
+    await glitchText(lt, '영원히.', 500);
     document.body.classList.add('nocursor');
-    await sleep(700);
+    await sleep(400);
 
     // 깜빡깜빡 → 암전
     const bo = $('blackout');
-    for (const d of [90, 260, 70, 380, 120, 200]) {
+    for (const d of [70, 180, 60, 230]) {
       bo.classList.toggle('on'); glitchSound(); await sleep(d);
     }
     bo.classList.add('on');
     stopBox();
-    await sleep(1400);
+    await sleep(600);
 
     // 3단계: 어둠 속 속삭임
     hide('load'); show('dark'); bo.classList.remove('on');
     startDrone(); startHeart();
     const w = $('whisper');
-    await sleep(1200);
-    await typeText(w, '불이 나갔네...');
-    await sleep(1500);
-    await typeText(w, '괜찮아. 무서워하지 마.');
-    await sleep(1300);
-    whisperSound(2.2, -1, -0.3);
-    w.style.opacity = 0; await sleep(1200); w.textContent = ''; w.style.opacity = 1;
+    await sleep(400);
+    whisperSound(1.6, -1, -0.3);
+    await typeText(w, '불이 나갔네...', 70);
+    await sleep(600);
 
     const eyes = $('eyes');
     eyes.style.left = rand(10, 70) + 'vw'; eyes.style.top = rand(12, 75) + 'vh';
     eyes.classList.add('on');
-    await sleep(2600);
+    w.textContent = '';
+    await sleep(900);
     w.classList.add('red');
-    whisperSound(2.6, 0.3, 1);
-    await typeText(w, '지금 네 바로 뒤에 있어.', 140);
-    await sleep(1600);
+    whisperSound(1.8, 0.3, 1);
+    await typeText(w, '네 바로 뒤에 있어.', 85);
+    await sleep(700);
 
     // 완전한 정적
     eyes.classList.remove('on'); eyes.style.transition = 'none'; eyes.style.opacity = 0;
     w.textContent = '';
     heartOn = false; cutDrone();
-    await sleep(1800);
+    await sleep(1000);
 
     // 4단계: 점프 스케어
     screamSound();
