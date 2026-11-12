@@ -132,7 +132,7 @@
 <!-- 2. 로딩 -->
 <div id="load" class="stage hidden">
   <div id="loadEmoji">🎃</div>
-  <p id="loadText">파티 준비 중...</p>
+  <p id="loadText"></p>
   <div class="bar"><div id="fill"></div></div>
   <p id="pct">0%</p>
 </div>
@@ -581,16 +581,15 @@
     // 2단계: 귀여운 로딩 → 서서히 이상해짐
     const fill = $('fill'), pct = $('pct'), lt = $('loadText'), le = $('loadEmoji');
     const setP = p => { fill.style.width = p + '%'; pct.textContent = Math.floor(p) + '%'; };
-    // 전체 약 3초: 로딩 0.9초 → 666% 0.6초 → 깜빡임 0.25초 → 어둠 속 눈 0.7초 → 정적 0.5초
-    document.body.classList.add('creep');
-    await tween(0, 66, 900, p => { setP(p); creep = p / 66; });
+    // 전체 약 1.6초: 로딩 0.3초 → 붉게 0.2초 → 깜빡임 0.25초 → 어둠 속 눈 0.5초 → 정적 0.4초 (문구 없음)
+    lt.textContent = '';
+    document.body.classList.add('creep', 'nocursor');
+    await tween(0, 66, 300, p => { setP(p); creep = p / 66; });
     creep = 1;
     $('load').classList.add('red', 'shiver');
     le.textContent = '👁';
     pct.textContent = '666%';
-    document.body.classList.add('nocursor');
-    await glitchText(lt, '영원히.', 350);
-    await sleep(250);
+    await sleep(200);
 
     // 깜빡깜빡 → 암전
     const bo = $('blackout');
@@ -599,22 +598,19 @@
     }
     stopBox();
 
-    // 3단계: 어둠 속 눈과 속삭임
+    // 3단계: 어둠 속 눈
     hide('load'); show('dark'); bo.classList.remove('on');
-    const w = $('whisper'), eyes = $('eyes');
+    const eyes = $('eyes');
     eyes.style.transition = 'none';
     eyes.style.left = rand(10, 70) + 'vw'; eyes.style.top = rand(12, 75) + 'vh';
     eyes.classList.add('on');
-    w.classList.add('red');
-    w.textContent = '뒤에 있어.';
-    whisperSound(0.7, 0.3, 1);
+    whisperSound(0.6, 0.3, 1);
     if (ac) { const t = ac.currentTime; thump(t, 0.9); thump(t + 0.21, 0.65); }
-    await sleep(700);
+    await sleep(500);
 
     // 완전한 정적
     eyes.classList.remove('on'); eyes.style.opacity = 0;
-    w.textContent = '';
-    await sleep(500);
+    await sleep(400);
 
     // 4단계: 점프 스케어
     screamSound();
